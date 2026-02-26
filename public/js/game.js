@@ -155,7 +155,7 @@ class WikiGame {
         let processedHtml = doc.body.innerHTML;
 
         // Truncate if too long
-        const maxLength = 50000;
+        const maxLength = 500000;
         if (processedHtml.length > maxLength) {
             processedHtml = processedHtml.substring(0, maxLength) +
                 '<div class="alert alert-info mt-3">Article truncated for performance.</div>';
@@ -383,7 +383,7 @@ class WikiGame {
         const finalScore = this.calculateFinalScore(timeElapsed);
 
         if (won) {
-            alert('🎉 Congratulations! 🎉\n\nYou reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
+            alert('Congratulations! You reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
         } else {
             alert('Game Over!\n\nFinal Score: ' + finalScore);
         }

@@ -4,104 +4,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SinglePlayer Section</title>
+    <title>WikiGame - Single Player</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: comics 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-        }
-
-        .navbar {
-            background: linear-gradient(to right, #23e078, #8E54E9);
-        }
-
-        .game-card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(red, green, blue, alpha);
-        }
-
-        .article-content {
-            max-height: 500px;
-            overflow-y: auto;
-            padding: 15px;
-            background-color: white;
-            border-radius: 5px;
-            border-style: dotted;
-            border: 1px solid #dee2e6;
-        }
-
-        .wiki-link {
-            color: #0d6efd;
-            text-decoration: none;
-            cursor: pointer;
-            padding: 2px 4px;
-            border-radius: 3px;
-        }
-
-        .wiki-link:hover {
-            background-color: #e7f1ff;
-            text-decoration: underline;
-        }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand" href="MainMenu.html">⇦ Back home</a>
-            <span class="navbar-text">SinglePlayer Mode</span>
+    <nav class="navbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">← WikiGame</a>
+            <span class="navbar-text">Single Player</span>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card game-card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Game Info</h5>
+    <div class="container-fluid game-container">
+        <div class="row g-0">
+            <!-- Left sidebar - Game info (narrow) -->
+            <div class="col-2 sidebar">
+                <div class="game-info">
+                    <div class="info-section">
+                        <h6>Goal</h6>
+                        <div id="goal-title" class="goal-article">Loading...</div>
                     </div>
-                    <div class="card-body">
-                        <p><strong>Goal Article:</strong></p>
-                        <p id="goal-title" class="text-success fw-bold">Loading...</p>
 
-                        <hr>
-
-                        <p><strong>Score:</strong> <span id="score" class="badge bg-success fs-6">1000</span></p>
-                        <p><strong>Time:</strong> <span id="timer" class="badge bg-info">00:00</span></p>
-                        <p><strong>Moves:</strong> <span id="moves" class="badge bg-warning">0</span></p>
-
-                        <div class="mt-3 d-grid gap-2">
-                            <button id="new-game" class="btn btn-primary">New Game</button>
-                            <button id="hint" class="btn btn-warning">Get Hint (-50)</button>
-                            <button id="give-up" class="btn btn-danger">Give Up</button>
+                    <div class="info-section">
+                        <h6>Stats</h6>
+                        <div class="stat-item">
+                            <span>Score</span>
+                            <span id="score" class="stat-value">1000</span>
                         </div>
+                        <div class="stat-item">
+                            <span>Time</span>
+                            <span id="timer" class="stat-value">00:00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Moves</span>
+                            <span id="moves" class="stat-value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h6>Controls</h6>
+                        <button id="new-game" class="btn btn-sm btn-outline-primary w-100 mb-2">New Game</button>
+                        <button id="hint" class="btn btn-sm btn-outline-warning w-100 mb-2">Hint (-50)</button>
+                        <button id="give-up" class="btn btn-sm btn-outline-danger w-100">Give Up</button>
+                    </div>
+
+                    <div class="info-section">
+                        <h6>Links</h6>
+                        <div id="article-count" class="small">0 available</div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-9">
-                <div class="card game-card">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                        <h5 id="current-title" class="mb-0">Current Article: Loading...</h5>
-                        <span id="article-count" class="badge bg-light text-dark">Links: 0</span>
-                    </div>
-                    <div class="card-body">
-                        <div id="article-content" class="article-content">
-                            <div class="text-center mt-3">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p class="mt-2">Loading game...</p>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Main content - Wikipedia article (wide) -->
+            <div class="col-10 main-content">
+                <div class="article-header">
+                    <h5 id="current-title">Current: <span class="text-muted">Loading...</span></h5>
                 </div>
-
-                <div class="mt-3">
-                    <div class="alert alert-info">
-                        <strong>How to play:</strong> Click any Wikipedia link to navigate to that article.
-                        Reach the Goal Article in the fewest moves possible!
+                <div id="article-content" class="article-content">
+                    <div class="text-center mt-5">
+                        <div class="spinner-border text-secondary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading article...</p>
                     </div>
                 </div>
             </div>
@@ -109,7 +75,6 @@
     </div>
 
     <script src="js/game.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
