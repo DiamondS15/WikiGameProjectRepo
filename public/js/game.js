@@ -328,14 +328,18 @@ class WikiGame {
         this.currentArticle = title;
         const currentTitle = document.getElementById('current-title');
         if (currentTitle) {
-            currentTitle.textContent = 'Current: ' + title;
+            currentTitle.innerHTML = 'Current: <span class="text-muted">' + title + '</span>';
         }
 
         this.updateUI();
         this.loadArticle(title);
 
-        // Check win condition
-        if (title === this.goalArticle) {
+        // Check win condition - compare with goal article
+        console.log('Checking win condition:', title, 'vs', this.goalArticle);
+
+        // Case-insensitive comparison to handle any formatting differences
+        if (title.toLowerCase() === this.goalArticle.toLowerCase()) {
+            console.log('WINNER! Reached goal:', title);
             this.endGame(true);
         }
     }
@@ -386,11 +390,33 @@ class WikiGame {
         const finalScore = this.calculateFinalScore(timeElapsed);
 
         if (won) {
-            alert('Congratulations! You reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
+            // Create a more visible win message
+            const articleContent = document.getElementById('article-content');
+            const winMessage = document.createElement('div');
+            winMessage.className = 'win-message';
+            winMessage.innerHTML = `
+                <div class="alert alert-success text-center" style="position: sticky; top: 0; z-index: 100; margin-bottom: 1rem;">
+                    <h3>🎉 YOU WIN! 🎉</h3>
+                    <p>You reached the goal in ${this.moves} moves!</p>
+                    <p>Time: ${timeElapsed}s | Final Score: ${finalScore}</p>
+                    <button class="btn btn-primary" onclick="location.reload()">Play Again</button>
+                </div>
+        `   ;
+
+            // Insert at the top of the article
+            if (articleContent && articleContent.firstChild) {
+                articleContent.insertBefore(winMessage, articleContent.firstChild);
+            } else if (articleContent) {
+                articleContent.appendChild(winMessage);
+            }
+
+            // Also show an alert as backup
+            alert('🎉 YOU WIN! 🎉\n\nYou reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
         } else {
             alert('Game Over!\n\nFinal Score: ' + finalScore);
         }
     }
+
 
     calculateFinalScore(timeElapsed) {
         let score = this.score;
