@@ -17,7 +17,7 @@ body {
 .navbar {
     background: white;
     border-bottom: 1px solid #e0e0e0;
-    padding: 0.5rem 1rem;
+    padding: 1.5rem 1rem;
     height: 48px;
     flex-shrink: 0;
 }
@@ -45,7 +45,7 @@ body {
     /* Sidebar scrolls if needed */
 }
 
-/* Main content area - THIS IS WHERE THE FIX IS */
+/* Main content area */
 .main-content {
     background: #fff;
     height: 100%;
@@ -71,7 +71,7 @@ body {
     color: #333;
 }
 
-/* Article content - THIS SCROLLS */
+/* Article content */
 .article-content {
     flex: 1;
     /* Takes remaining space */
@@ -105,13 +105,15 @@ body {
 
 /* Scrollbar styling - make it visible */
 .article-content::-webkit-scrollbar {
-    width: 8px;
+    width: 14px;
     /* Slightly wider */
 }
 
 .article-content::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 4px;
+    border-radius: 7px;
+    border: 2px solid transparent;
+    background-clip: content-box;
 }
 
 .article-content::-webkit-scrollbar-thumb {
@@ -119,8 +121,28 @@ body {
     border-radius: 4px;
 }
 
+.article-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 7px;
+    border: 3px solid transparent;
+    /* Creates padding around thumb */
+    background-clip: content-box;
+    /* Makes thumb appear narrower but hit area stays 14px */
+}
+
 .article-content::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: #a0a0a0;
+}
+
+.article-content::-webkit-scrollbar-thumb:active {
+    background: #808080;
+}
+
+/* For Firefox */
+.article-content {
+    scrollbar-width: auto;
+    /* Changed from 'thin' to 'auto' for wider scrollbar */
+    scrollbar-color: #c1c1c1 #f1f1f1;
 }
 
 * {
