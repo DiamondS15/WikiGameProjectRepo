@@ -5,6 +5,17 @@ const fetch = require('node-fetch'); // Add this back
 const app = express();
 const PORT = 3001;
 
+const topicClusters = {
+    'Science': ['Physics', 'Chemistry', 'Biology', 'Astronomy', 'Mathematics'],
+    'History': ['Ancient History', 'Medieval History', 'World War II', 'Civilizations'],
+    'Art': ['Painting', 'Sculpture', 'Renaissance Art', 'Modern Art'],
+    'Music': ['Classical Music', 'Rock Music', 'Jazz', 'Musicians'],
+    'Technology': ['Computers', 'Internet', 'Programming', 'Artificial Intelligence'],
+    'Philosophy': ['Ethics', 'Metaphysics', 'Epistemology', 'Logic'],
+    'Literature': ['Novels', 'Poetry', 'Writers', 'Literary Movements'],
+    'Sports': ['Olympic Games', 'Football', 'Basketball', 'Athletes']
+};
+
 // Serve static files
 app.use(express.static('public'));
 
@@ -52,6 +63,16 @@ app.get('/api/article/:title', async (req, res) => {
         console.error('Error:', error);
         res.status(500).json({ error: 'Failed to fetch article' });
     }
+});
+
+app.get('/api/related-article-simple/:title', async (req, res) => {
+    // For now, just pick from the same cluster based on first letter
+    // You can expand this logic
+    const categories = Object.keys(topicClusters);
+    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+    const topics = topicClusters[randomCategory];
+    const related = topics[Math.floor(Math.random() * topics.length)];
+    res.json({ title: related });
 });
 
 app.listen(PORT, () => {

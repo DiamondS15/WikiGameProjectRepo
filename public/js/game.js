@@ -32,25 +32,25 @@ class WikiGame {
             const startData = await startResponse.json();
             this.currentArticle = startData.title;
 
-            // Get different goal article
-            let goalResponse;
-            let goalData;
-            let attempts = 0;
+            // Get RELATED goal article using the simple endpoint
+            const relatedResponse = await fetch('/api/related-article-simple/' + encodeURIComponent(this.currentArticle));
+            const relatedData = await relatedResponse.json();
+            this.goalArticle = relatedData.title;
 
-            do {
-                goalResponse = await fetch('/api/random-article');
-                goalData = await goalResponse.json();
-                this.goalArticle = goalData.title;
-                attempts++;
-                if (attempts > 10) break;
-            } while (this.goalArticle === this.currentArticle);
+            // Make sure they're different (just in case)
+            if (this.goalArticle === this.currentArticle) {
+                // If same, try one more time
+                const relatedResponse2 = await fetch('/api/related-article-simple/' + encodeURIComponent(this.currentArticle));
+                const relatedData2 = await relatedResponse2.json();
+                this.goalArticle = relatedData2.title;
+            }
 
             // Update UI
             const currentTitleEl = document.getElementById('current-title');
             const goalTitleEl = document.getElementById('goal-title');
 
             if (currentTitleEl) {
-                currentTitleEl.textContent = 'Current: ' + this.currentArticle;
+                currentTitleEl.innerHTML = 'Current: <span class="text-muted">' + this.currentArticle + '</span>';
             }
             if (goalTitleEl) {
                 goalTitleEl.textContent = this.goalArticle;
@@ -58,6 +58,9 @@ class WikiGame {
 
             this.updateUI();
             await this.loadArticle(this.currentArticle);
+
+            // Log for debugging
+            console.log('Game started! From "' + this.currentArticle + '" to "' + this.goalArticle + '"');
 
         } catch (error) {
             console.error('Failed to start game:', error);
@@ -155,7 +158,7 @@ class WikiGame {
         let processedHtml = doc.body.innerHTML;
 
         // Truncate if too long
-        const maxLength = 50000;
+        const maxLength = 500000;
         if (processedHtml.length > maxLength) {
             processedHtml = processedHtml.substring(0, maxLength) +
                 '<div class="alert alert-info mt-3">Article truncated for performance.</div>';
@@ -383,7 +386,7 @@ class WikiGame {
         const finalScore = this.calculateFinalScore(timeElapsed);
 
         if (won) {
-            alert('🎉 Congratulations! 🎉\n\nYou reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
+            alert('Congratulations! You reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
         } else {
             alert('Game Over!\n\nFinal Score: ' + finalScore);
         }
@@ -413,18 +416,20 @@ class WikiGame {
             }.bind(this));
         }
 
+        // Fixed hint button
         if (hintBtn) {
             hintBtn.addEventListener('click', function () {
                 if (this.score >= 50) {
                     this.score -= 50;
                     this.updateUI();
-                    alert('Hint: Your goal is to reach "' + this.goalArticle + '"');
+                    alert('Your goal is: ' + this.goalArticle);
                 } else {
                     alert('Not enough points for a hint!');
                 }
             }.bind(this));
         }
 
+        // Fixed give up button
         if (giveUpBtn) {
             giveUpBtn.addEventListener('click', function () {
                 if (confirm('Are you sure you want to give up?')) {

@@ -1,120 +1,392 @@
-/* Wikipedia-style article rendering */
-.wikipedia-article {
-    font-family: 'Georgia', 'Times New Roman', serif;
+/* Reset and base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #f5f5f5;
+    height: 100vh;
+    overflow: hidden;
+    /* Prevent body scrolling */
+}
+
+/* Navbar */
+.navbar {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 1.5rem 1rem;
+    height: 48px;
+    flex-shrink: 0;
+}
+
+/* Game container - fills remaining height */
+.game-container {
+    height: calc(100vh - 48px);
+    overflow: hidden;
+    /* Prevent container scrolling */
+}
+
+/* Row takes full height */
+.game-container .row {
+    height: 100%;
+    margin: 0;
+}
+
+/* Sidebar styles */
+.sidebar {
+    background: white;
+    border-right: 1px solid #e0e0e0;
+    padding: 1rem;
+    height: 100%;
+    overflow-y: auto;
+    /* Sidebar scrolls if needed */
+}
+
+/* Main content area */
+.main-content {
+    background: #fff;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    /* Important: main container doesn't scroll */
+    padding: 0;
+}
+
+.article-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+    flex-shrink: 0;
+    /* Header stays fixed */
+}
+
+.article-header h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Article content */
+.article-content {
+    flex: 1;
+    /* Takes remaining space */
+    overflow-y: auto;
+    /* ENABLES SCROLLING */
+    padding: 1.5rem;
     line-height: 1.6;
-    color: #202122;
+    font-size: 0.95rem;
+    height: 0;
+    /* Force flex to calculate height correctly */
+    min-height: 0;
+    /* Important for flex scrolling */
+}
+
+/* Wikipedia article styling */
+.wikipedia-article {
+    max-width: 800px;
+    margin: 0 auto;
+    padding-bottom: 2rem;
+    /* Space at bottom for scrolling */
 }
 
 .article-title {
-    font-family: 'Linux Libertine', 'Georgia', 'Times New Roman', serif;
-    border-bottom: 1px solid #a2a9b1;
-    font-size: 2.2em;
-    margin-bottom: 0.5rem;
-    padding-bottom: 0.2rem;
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    color: #222;
 }
 
-.article-summary {
-    font-size: 1.1em;
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-left: 4px solid #36c;
-    margin: 1rem 0;
-}
-
-.article-body {
-    font-size: 1.1em;
-}
-
-/* Wikipedia content styling */
-.wikipedia-body {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-.wikipedia-heading {
-    font-family: 'Linux Libertine', 'Georgia', 'Times New Roman', serif;
-    font-weight: normal;
-    border-bottom: 1px solid #a2a9b1;
-    margin: 1.5rem 0 1rem 0;
-    padding-bottom: 0.2rem;
-}
-
-.wikipedia-paragraph {
-    margin: 0.5rem 0 1rem 0;
-}
-
-/* Game link styling */
-.wiki-game-link {
-    color: #0645ad !important;
-    text-decoration: none !important;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    padding: 2px 1px;
-}
-
-.wiki-game-link:hover {
-    background-color: #e7f1ff !important;
-    text-decoration: underline !important;
-}
-
-/* Article content scroll area */
-.article-content {
-    max-height: 600px;
-    overflow-y: auto;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Image handling */
-.wikipedia-image {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-    border: 1px solid #c8ccd1;
-    padding: 2px;
-}
-
-/* Table styling */
-.wikipedia-body table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 1rem 0;
-}
-
-.wikipedia-body th,
-.wikipedia-body td {
-    border: 1px solid #a2a9b1;
-    padding: 0.5rem;
-}
-
-.wikipedia-body th {
-    background-color: #eaecf0;
-}
-
-/* Citation styling */
-.wikipedia-body .reference {
-    font-size: 0.85em;
-    line-height: 1;
-}
-
-/* Scrollbar styling for article content */
+/* Scrollbar styling - make it visible */
 .article-content::-webkit-scrollbar {
-    width: 8px;
+    width: 14px;
+    /* Slightly wider */
 }
 
 .article-content::-webkit-scrollbar-track {
     background: #f1f1f1;
+    border-radius: 7px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.article-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
     border-radius: 4px;
 }
 
 .article-content::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
+    background: #c1c1c1;
+    border-radius: 7px;
+    border: 3px solid transparent;
+    /* Creates padding around thumb */
+    background-clip: content-box;
+    /* Makes thumb appear narrower but hit area stays 14px */
 }
 
 .article-content::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #a0a0a0;
+}
+
+.article-content::-webkit-scrollbar-thumb:active {
+    background: #808080;
+}
+
+/* For Firefox */
+.article-content {
+    scrollbar-width: auto;
+    /* Changed from 'thin' to 'auto' for wider scrollbar */
+    scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background: #f5f5f5;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Navbar */
+.navbar {
+    background: white;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0.5rem 1rem;
+    height: 48px;
+}
+
+.navbar-brand {
+    color: #333;
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+.navbar-brand:hover {
+    color: #000;
+}
+
+.navbar-text {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Game container - fills remaining height */
+.game-container {
+    height: calc(100vh - 48px);
+}
+
+/* Sidebar styles */
+.sidebar {
+    background: white;
+    border-right: 1px solid #e0e0e0;
+    padding: 1rem;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.info-section {
+    margin-bottom: 1.5rem;
+}
+
+.info-section h6 {
+    color: #666;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.25rem;
+}
+
+.goal-article {
+    font-size: 0.9rem;
+    color: #d32f2f;
+    font-weight: 500;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: #555;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Buttons */
+.btn-sm {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+}
+
+.btn-outline-primary {
+    color: #1976d2;
+    border-color: #1976d2;
+}
+
+.btn-outline-primary:hover {
+    background: #1976d2;
+    color: white;
+}
+
+.btn-outline-warning {
+    color: #f57c00;
+    border-color: #f57c00;
+}
+
+.btn-outline-warning:hover {
+    background: #f57c00;
+    color: white;
+}
+
+.btn-outline-danger {
+    color: #d32f2f;
+    border-color: #d32f2f;
+}
+
+.btn-outline-danger:hover {
+    background: #d32f2f;
+    color: white;
+}
+
+/* Main content area */
+.main-content {
+    background: #fff;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.article-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+}
+
+.article-header h5 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.article-header .text-muted {
+    color: #666;
+    font-weight: normal;
+}
+
+/* Article content - scrollable */
+.article-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* Wikipedia article styling */
+.wikipedia-article {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.article-title {
+    font-size: 1.8rem;
+    font-weight: 400;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    color: #222;
+}
+
+.article-body {
+    color: #333;
+}
+
+.article-body h1,
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
+    font-weight: 500;
+    margin: 1.5rem 0 1rem;
+    color: #222;
+}
+
+.article-body h2 {
+    font-size: 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 0.3rem;
+}
+
+.article-body p {
+    margin: 1rem 0;
+}
+
+.article-body a {
+    color: #1976d2;
+    text-decoration: none;
+}
+
+.article-body a:hover {
+    text-decoration: underline;
+}
+
+/* Game links */
+.wiki-game-link {
+    color: #1976d2;
+    cursor: pointer;
+    text-decoration: none;
+    border-bottom: 1px dotted #ccc;
+}
+
+.wiki-game-link:hover {
+    background: #f0f7ff;
+    border-bottom-color: #1976d2;
+}
+
+/* Images */
+.wikipedia-image {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+}
+
+/* Scrollbar styling */
+.article-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.article-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.article-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.article-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
