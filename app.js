@@ -138,7 +138,7 @@ app.get('/api/best-link', async (req, res) => {
             }
         }
 
-        // SCORING SYSTEM WITH 2-STEP LOOKAHEAD - ONLY RELEVANT LINKS
+        // SCORING SYSTEM WITH 2-STEP LOOKAHEAD
         const linkScores = [];
         const linksToCheck = links.slice(0, 10); // Check first 10 links (to avoid rate limiting)
 
@@ -209,8 +209,7 @@ app.get('/api/best-link', async (req, res) => {
                     }
                 }
 
-                // IMPORTANT CHANGE: Only include links with actual relevance
-                // No more "available to explore" fallback
+                // Only include links with actual relevance
                 if (score > 0) {
                     linkScores.push({
                         title: link,
@@ -243,7 +242,7 @@ app.get('/api/best-link', async (req, res) => {
                 alternatives: linkScores.slice(0, 3).map(l => l.title)
             });
         } else {
-            // No relevant links found - honest message
+            // No relevant links found message
             res.json({
                 bestLink: null,
                 message: "No clearly relevant links found. Try exploring different paths!",

@@ -32,12 +32,12 @@ class WikiGame {
             const startData = await startResponse.json();
             this.currentArticle = startData.title;
 
-            // Get RELATED goal article using the simple endpoint
+            // Get related goal article using the simple endpoint
             const relatedResponse = await fetch('/api/related-article-simple/' + encodeURIComponent(this.currentArticle));
             const relatedData = await relatedResponse.json();
             this.goalArticle = relatedData.title;
 
-            // Make sure they're different (just in case)
+            // Make sure they're different
             if (this.goalArticle === this.currentArticle) {
                 // If same, try one more time
                 const relatedResponse2 = await fetch('/api/related-article-simple/' + encodeURIComponent(this.currentArticle));
@@ -133,7 +133,7 @@ class WikiGame {
             } else {
                 console.log('Could not find link to highlight:', linkTitle);
 
-                // If not found, try again after a longer delay (article might still be rendering)
+                // If not found, try again after a longer delay
                 setTimeout(() => {
                     const retryLinks = document.querySelectorAll('.wiki-game-link');
                     retryLinks.forEach(link => {
@@ -197,7 +197,7 @@ class WikiGame {
                 '</div>' +
                 '</div>';
 
-            // Make links clickable
+            // Make the links clickable
             this.setupWikipediaLinks();
 
             // Count links
@@ -304,7 +304,6 @@ class WikiGame {
             for (let i = 0; i < links.length; i++) {
                 const link = links[i];
                 const href = link.getAttribute('href');
-                // IMPROVED TITLE EXTRACTION
                 // Decode the URL and clean it properly
                 let title = decodeURIComponent(href.replace('/wiki/', ''));
 
@@ -367,7 +366,6 @@ class WikiGame {
         }
     }
 
-    // FIXED: This method had the syntax error
     setupWikipediaLinks() {
         try {
             const links = document.querySelectorAll('.wiki-game-link');
@@ -427,7 +425,7 @@ class WikiGame {
         this.updateUI();
         this.loadArticle(title);
 
-        // IMPROVED WIN CONDITION CHECKING
+        // WIN CONDITION CHECKING
         const currentLower = title.toLowerCase();
         const goalLower = this.goalArticle.toLowerCase();
 
@@ -503,7 +501,6 @@ class WikiGame {
         const finalScore = this.calculateFinalScore(timeElapsed);
 
         if (won) {
-            // Create a more visible win message
             const articleContent = document.getElementById('article-content');
             const winMessage = document.createElement('div');
             winMessage.className = 'win-message';
@@ -524,7 +521,7 @@ class WikiGame {
             }
 
             // Also show an alert as backup
-            alert('🎉 YOU WIN! 🎉\n\nYou reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
+            alert(' YOU WIN! \n\nYou reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
         } else {
             alert('Game Over!\n\nFinal Score: ' + finalScore);
         }
