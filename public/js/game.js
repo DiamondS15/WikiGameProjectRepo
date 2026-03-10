@@ -45,6 +45,15 @@ class WikiGame {
                 this.goalArticle = relatedData2.title;
             }
 
+            // After setting the goal article, check if current and goal are the same
+            if (this.currentArticle.toLowerCase() === this.goalArticle.toLowerCase() ||
+                this.currentArticle.toLowerCase() + 's' === this.goalArticle.toLowerCase() ||
+                this.currentArticle.toLowerCase() === this.goalArticle.toLowerCase() + 's') {
+                console.log('Start and goal are the same article! You win!');
+                this.endGame(true);
+                return;
+            }
+
             // Update UI
             const currentTitleEl = document.getElementById('current-title');
             const goalTitleEl = document.getElementById('goal-title');
@@ -66,6 +75,84 @@ class WikiGame {
             console.error('Failed to start game:', error);
             alert('Failed to start game. Please try again.');
         }
+    }
+    highlightSuggestedLink(linkTitle) {
+        // Wait a moment for the article to fully load
+        setTimeout(() => {
+            // Find all game links
+            const links = document.querySelectorAll('.wiki-game-link');
+            let found = false;
+            let targetLink = null;
+
+            // Remove any existing highlights
+            links.forEach(l => {
+                l.style.backgroundColor = '';
+                l.style.fontWeight = '';
+                l.style.border = '';
+                l.style.boxShadow = '';
+            });
+
+            // Find and highlight the suggested link
+            links.forEach(link => {
+                if (link.dataset.title === linkTitle) {
+                    link.style.backgroundColor = '#fff3cd';
+                    link.style.fontWeight = 'bold';
+                    link.style.border = '2px solid #ffc107';
+                    link.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
+                    link.style.padding = '2px 4px';
+                    link.style.transition = 'all 0.3s ease';
+
+                    targetLink = link;
+                    found = true;
+                }
+            });
+
+            if (found && targetLink) {
+                // SCROLL TO THE LINK
+                targetLink.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+
+                // Add a pulsing animation class
+                targetLink.classList.add('hint-pulse');
+
+                // Log for debugging
+                console.log('Scrolling to:', linkTitle);
+
+                // Remove highlight after 8 seconds
+                setTimeout(() => {
+                    targetLink.style.backgroundColor = '';
+                    targetLink.style.fontWeight = '';
+                    targetLink.style.border = '';
+                    targetLink.style.boxShadow = '';
+                    targetLink.style.padding = '';
+                    targetLink.classList.remove('hint-pulse');
+                }, 8000);
+            } else {
+                console.log('Could not find link to highlight:', linkTitle);
+
+                // If not found, try again after a longer delay (article might still be rendering)
+                setTimeout(() => {
+                    const retryLinks = document.querySelectorAll('.wiki-game-link');
+                    retryLinks.forEach(link => {
+                        if (link.dataset.title === linkTitle) {
+                            link.style.backgroundColor = '#fff3cd';
+                            link.style.fontWeight = 'bold';
+                            link.style.border = '2px solid #ffc107';
+                            link.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                            setTimeout(() => {
+                                link.style.backgroundColor = '';
+                                link.style.fontWeight = '';
+                                link.style.border = '';
+                            }, 8000);
+                        }
+                    });
+                }, 2000);
+            }
+        }, 600); // Slightly longer wait to ensure article is fully rendered
     }
 
     async loadArticle(title) {
@@ -169,12 +256,8 @@ class WikiGame {
 
     removeUnwantedElements(doc) {
         const selectorsToRemove = [
-            '.mw-editsection',
-            '.reference',
-            '.mw-references-wrap',
             '#toc',
             '.toc',
-            '.infobox',
             '.navbox',
             '.vertical-navbox',
             '.metadata',
@@ -221,7 +304,17 @@ class WikiGame {
             for (let i = 0; i < links.length; i++) {
                 const link = links[i];
                 const href = link.getAttribute('href');
-                const title = decodeURIComponent(href.replace('/wiki/', '').replace(/_/g, ' '));
+                // IMPROVED TITLE EXTRACTION
+                // Decode the URL and clean it properly
+                let title = decodeURIComponent(href.replace('/wiki/', ''));
+
+                // Handle underscores and special characters
+                title = title.replace(/_/g, ' ');
+
+                // Remove any URL parameters (like ?title=...)
+                if (title.includes('?')) {
+                    title = title.split('?')[0];
+                }
 
                 // Skip special pages
                 if (href.includes(':') ||
@@ -334,14 +427,34 @@ class WikiGame {
         this.updateUI();
         this.loadArticle(title);
 
-        // Check win condition - compare with goal article
-        console.log('Checking win condition:', title, 'vs', this.goalArticle);
+        // IMPROVED WIN CONDITION CHECKING
+        const currentLower = title.toLowerCase();
+        const goalLower = this.goalArticle.toLowerCase();
 
-        // Case-insensitive comparison to handle any formatting differences
-        if (title.toLowerCase() === this.goalArticle.toLowerCase()) {
-            console.log('WINNER! Reached goal:', title);
+        // Check for exact match
+        if (currentLower === goalLower) {
+            console.log('WINNER! Exact match:', title);
             this.endGame(true);
+            return;
         }
+
+        // Check for singular/plural variations
+        if (currentLower + 's' === goalLower || currentLower === goalLower + 's') {
+            console.log('WINNER! Singular/plural match:', title, 'vs', this.goalArticle);
+            this.endGame(true);
+            return;
+        }
+
+        // Check if one contains the other (for phrases)
+        if (goalLower.includes(currentLower) || currentLower.includes(goalLower)) {
+            if (goalLower.length > 3 && currentLower.length > 3) {
+                console.log('WINNER! Partial match:', title, 'vs', this.goalArticle);
+                this.endGame(true);
+                return;
+            }
+        }
+
+        console.log('No win yet:', title, 'vs', this.goalArticle);
     }
 
     updateUI() {
@@ -442,15 +555,45 @@ class WikiGame {
             }.bind(this));
         }
 
-        // Fixed hint button
         if (hintBtn) {
-            hintBtn.addEventListener('click', function () {
+            hintBtn.addEventListener('click', async function () {
                 if (this.score >= 50) {
                     this.score -= 50;
                     this.updateUI();
-                    alert('Your goal is: ' + this.goalArticle);
+
+                    hintBtn.disabled = true;
+                    hintBtn.textContent = 'Analyzing...';
+
+                    try {
+                        const response = await fetch(
+                            `/api/best-link?current=${encodeURIComponent(this.currentArticle)}&goal=${encodeURIComponent(this.goalArticle)}`
+                        );
+                        const data = await response.json();
+
+                        if (data.error) {
+                            alert('Could not analyze links. Try again later.');
+                        } else if (data.bestLink) {
+                            let message = `🔍 Smart Hint:\n\nBased on our analysis, the best link to click is:\n\n👉 "${data.bestLink}"\n\n${data.message}`;
+
+                            if (data.alternatives && data.alternatives.length > 0) {
+                                message += `\n\nOther options: ${data.alternatives.join(', ')}`;
+                            }
+
+                            alert(message);
+                            this.highlightSuggestedLink(data.bestLink);
+                        } else {
+                            // No relevant links found
+                            alert('No clearly relevant links found in this article. Try exploring different paths!');
+                        }
+                    } catch (error) {
+                        console.error('Hint error:', error);
+                        alert('Error getting hint. Please try again.');
+                    } finally {
+                        hintBtn.disabled = false;
+                        hintBtn.textContent = 'Hint (-50)';
+                    }
                 } else {
-                    alert('Not enough points for a hint!');
+                    alert('Not enough points for a hint! (Need 50 points)');
                 }
             }.bind(this));
         }
