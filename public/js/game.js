@@ -32,17 +32,26 @@ class WikiGame {
             const startData = await startResponse.json();
             this.currentArticle = startData.title;
 
-            // Get RELATED goal article using the simple endpoint
+            // Get related goal article using the simple endpoint
             const relatedResponse = await fetch('/api/related-article-simple/' + encodeURIComponent(this.currentArticle));
             const relatedData = await relatedResponse.json();
             this.goalArticle = relatedData.title;
 
-            // Make sure they're different (just in case)
+            // Make sure they're different
             if (this.goalArticle === this.currentArticle) {
                 // If same, try one more time
                 const relatedResponse2 = await fetch('/api/related-article-simple/' + encodeURIComponent(this.currentArticle));
                 const relatedData2 = await relatedResponse2.json();
                 this.goalArticle = relatedData2.title;
+            }
+
+            // After setting the goal article, check if current and goal are the same
+            if (this.currentArticle.toLowerCase() === this.goalArticle.toLowerCase() ||
+                this.currentArticle.toLowerCase() + 's' === this.goalArticle.toLowerCase() ||
+                this.currentArticle.toLowerCase() === this.goalArticle.toLowerCase() + 's') {
+                console.log('Start and goal are the same article! You win!');
+                this.endGame(true);
+                return;
             }
 
             // Update UI
@@ -66,6 +75,84 @@ class WikiGame {
             console.error('Failed to start game:', error);
             alert('Failed to start game. Please try again.');
         }
+    }
+    highlightSuggestedLink(linkTitle) {
+        // Wait a moment for the article to fully load
+        setTimeout(() => {
+            // Find all game links
+            const links = document.querySelectorAll('.wiki-game-link');
+            let found = false;
+            let targetLink = null;
+
+            // Remove any existing highlights
+            links.forEach(l => {
+                l.style.backgroundColor = '';
+                l.style.fontWeight = '';
+                l.style.border = '';
+                l.style.boxShadow = '';
+            });
+
+            // Find and highlight the suggested link
+            links.forEach(link => {
+                if (link.dataset.title === linkTitle) {
+                    link.style.backgroundColor = '#fff3cd';
+                    link.style.fontWeight = 'bold';
+                    link.style.border = '2px solid #ffc107';
+                    link.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
+                    link.style.padding = '2px 4px';
+                    link.style.transition = 'all 0.3s ease';
+
+                    targetLink = link;
+                    found = true;
+                }
+            });
+
+            if (found && targetLink) {
+                // SCROLL TO THE LINK
+                targetLink.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+
+                // Add a pulsing animation class
+                targetLink.classList.add('hint-pulse');
+
+                // Log for debugging
+                console.log('Scrolling to:', linkTitle);
+
+                // Remove highlight after 8 seconds
+                setTimeout(() => {
+                    targetLink.style.backgroundColor = '';
+                    targetLink.style.fontWeight = '';
+                    targetLink.style.border = '';
+                    targetLink.style.boxShadow = '';
+                    targetLink.style.padding = '';
+                    targetLink.classList.remove('hint-pulse');
+                }, 8000);
+            } else {
+                console.log('Could not find link to highlight:', linkTitle);
+
+                // If not found, try again after a longer delay
+                setTimeout(() => {
+                    const retryLinks = document.querySelectorAll('.wiki-game-link');
+                    retryLinks.forEach(link => {
+                        if (link.dataset.title === linkTitle) {
+                            link.style.backgroundColor = '#fff3cd';
+                            link.style.fontWeight = 'bold';
+                            link.style.border = '2px solid #ffc107';
+                            link.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                            setTimeout(() => {
+                                link.style.backgroundColor = '';
+                                link.style.fontWeight = '';
+                                link.style.border = '';
+                            }, 8000);
+                        }
+                    });
+                }, 2000);
+            }
+        }, 600); // Slightly longer wait to ensure article is fully rendered
     }
 
     async loadArticle(title) {
@@ -110,7 +197,7 @@ class WikiGame {
                 '</div>' +
                 '</div>';
 
-            // Make links clickable
+            // Make the links clickable
             this.setupWikipediaLinks();
 
             // Count links
@@ -169,12 +256,8 @@ class WikiGame {
 
     removeUnwantedElements(doc) {
         const selectorsToRemove = [
-            '.mw-editsection',
-            '.reference',
-            '.mw-references-wrap',
             '#toc',
             '.toc',
-            '.infobox',
             '.navbox',
             '.vertical-navbox',
             '.metadata',
@@ -221,7 +304,16 @@ class WikiGame {
             for (let i = 0; i < links.length; i++) {
                 const link = links[i];
                 const href = link.getAttribute('href');
-                const title = decodeURIComponent(href.replace('/wiki/', '').replace(/_/g, ' '));
+                // Decode the URL and clean it properly
+                let title = decodeURIComponent(href.replace('/wiki/', ''));
+
+                // Handle underscores and special characters
+                title = title.replace(/_/g, ' ');
+
+                // Remove any URL parameters (like ?title=...)
+                if (title.includes('?')) {
+                    title = title.split('?')[0];
+                }
 
                 // Skip special pages
                 if (href.includes(':') ||
@@ -274,7 +366,6 @@ class WikiGame {
         }
     }
 
-    // FIXED: This method had the syntax error
     setupWikipediaLinks() {
         try {
             const links = document.querySelectorAll('.wiki-game-link');
@@ -328,16 +419,40 @@ class WikiGame {
         this.currentArticle = title;
         const currentTitle = document.getElementById('current-title');
         if (currentTitle) {
-            currentTitle.textContent = 'Current: ' + title;
+            currentTitle.innerHTML = 'Current: <span class="text-muted">' + title + '</span>';
         }
 
         this.updateUI();
         this.loadArticle(title);
 
-        // Check win condition
-        if (title === this.goalArticle) {
+        // WIN CONDITION CHECKING
+        const currentLower = title.toLowerCase();
+        const goalLower = this.goalArticle.toLowerCase();
+
+        // Check for exact match
+        if (currentLower === goalLower) {
+            console.log('WINNER! Exact match:', title);
             this.endGame(true);
+            return;
         }
+
+        // Check for singular/plural variations
+        if (currentLower + 's' === goalLower || currentLower === goalLower + 's') {
+            console.log('WINNER! Singular/plural match:', title, 'vs', this.goalArticle);
+            this.endGame(true);
+            return;
+        }
+
+        // Check if one contains the other (for phrases)
+        if (goalLower.includes(currentLower) || currentLower.includes(goalLower)) {
+            if (goalLower.length > 3 && currentLower.length > 3) {
+                console.log('WINNER! Partial match:', title, 'vs', this.goalArticle);
+                this.endGame(true);
+                return;
+            }
+        }
+
+        console.log('No win yet:', title, 'vs', this.goalArticle);
     }
 
     updateUI() {
@@ -386,11 +501,32 @@ class WikiGame {
         const finalScore = this.calculateFinalScore(timeElapsed);
 
         if (won) {
-            alert('Congratulations! You reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
+            const articleContent = document.getElementById('article-content');
+            const winMessage = document.createElement('div');
+            winMessage.className = 'win-message';
+            winMessage.innerHTML = `
+                <div class="alert alert-success text-center" style="position: sticky; top: 0; z-index: 100; margin-bottom: 1rem;">
+                    <h3>🎉 YOU WIN! 🎉</h3>
+                    <p>You reached the goal in ${this.moves} moves!</p>
+                    <p>Time: ${timeElapsed}s | Final Score: ${finalScore}</p>
+                    <button class="btn btn-primary" onclick="location.reload()">Play Again</button>
+                </div>
+        `   ;
+
+            // Insert at the top of the article
+            if (articleContent && articleContent.firstChild) {
+                articleContent.insertBefore(winMessage, articleContent.firstChild);
+            } else if (articleContent) {
+                articleContent.appendChild(winMessage);
+            }
+
+            // Also show an alert as backup
+            alert(' YOU WIN! \n\nYou reached the goal in ' + this.moves + ' moves!\nTime: ' + timeElapsed + 's\nFinal Score: ' + finalScore);
         } else {
             alert('Game Over!\n\nFinal Score: ' + finalScore);
         }
     }
+
 
     calculateFinalScore(timeElapsed) {
         let score = this.score;
@@ -416,15 +552,23 @@ class WikiGame {
             }.bind(this));
         }
 
-        // Fixed hint button
         if (hintBtn) {
             hintBtn.addEventListener('click', function () {
                 if (this.score >= 50) {
                     this.score -= 50;
                     this.updateUI();
-                    alert('Your goal is: ' + this.goalArticle);
+
+                    // Simple helpful messages based on game state
+                    const messages = [
+                        `Look for links about ${this.goalArticle.split(' ')[0]}`,
+                        `Check the "See also" section`,
+                        `Try finding articles related to ${this.goalArticle}`,
+                        `Browse categories related to your goal`
+                    ];
+
+                    alert(`Hint: ${messages[Math.floor(Math.random() * messages.length)]}`);
                 } else {
-                    alert('Not enough points for a hint!');
+                    alert('Not enough points!');
                 }
             }.bind(this));
         }
