@@ -1,8 +1,12 @@
 const express = require('express');
-const path = require('path');
-const fetch = require('node-fetch'); // Add this back
+const fetch = require('node-fetch');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
 const PORT = 3001;
 
 const topicClusters = {
@@ -16,12 +20,15 @@ const topicClusters = {
     'Sports': ['Olympic Games', 'Football', 'Basketball', 'Athletes']
 };
 
+// in-memory multiplayer rooms
+const rooms = {};
+
 // Serve static files
 app.use(express.static('public'));
 
-// Simple route
+// Home route
 app.get('/', (req, res) => {
-    res.send('Server is working! Go to <a href="/singleplayer.html">/singleplayer.html</a>');
+    res.send('Server is working! Go to <a href="/SinglePlayer.html">/SinglePlayer.html</a>');
 });
 
 // REAL Wikipedia API endpoint
@@ -35,19 +42,16 @@ app.get('/api/random-article', async (req, res) => {
         res.json({ title });
     } catch (error) {
         console.error('Error:', error);
-        // Fallback to fake articles if Wikipedia fails
         const articles = ['Philosophy', 'Science', 'History', 'Art', 'Music'];
         const random = articles[Math.floor(Math.random() * articles.length)];
         res.json({ title: random });
     }
 });
 
-// Add article content endpoint
+// article content endpoint
 app.get('/api/article/:title', async (req, res) => {
     try {
         const title = req.params.title;
-        // Double-decode the title to handle any encoded characters
-        const decodedTitle = decodeURIComponent(title);
 
         const response = await fetch(
             `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(title)}&format=json&prop=text&origin=*`
@@ -69,8 +73,6 @@ app.get('/api/article/:title', async (req, res) => {
 });
 
 app.get('/api/related-article-simple/:title', async (req, res) => {
-    // For now, just pick from the same cluster based on first letter
-    // You can expand this logic
     const categories = Object.keys(topicClusters);
     const randomCategory = categories[Math.floor(Math.random() * categories.length)];
     const topics = topicClusters[randomCategory];
@@ -78,10 +80,7 @@ app.get('/api/related-article-simple/:title', async (req, res) => {
     res.json({ title: related });
 });
 
-app.listen(PORT, () => {
-    console.log(`✅ Server running at http://localhost:${PORT}`);
-});
-// Improved best-link endpoint - FIRST CHECK ALL ACTUAL LINKS
+// best-link endpoint
 app.get('/api/best-link', async (req, res) => {
     try {
         const { current, goal } = req.query;
@@ -92,7 +91,6 @@ app.get('/api/best-link', async (req, res) => {
 
         console.log(`Finding best link from "${current}" to "${goal}"`);
 
-        // Get the current article to extract its links
         const currentResponse = await fetch(
             `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(current)}&format=json&prop=links&origin=*`
         );
@@ -102,7 +100,6 @@ app.get('/api/best-link', async (req, res) => {
             return res.json({ bestLink: null, message: 'Could not analyze article links' });
         }
 
-        // Get all links from the current article
         const links = currentData.parse.links
             .filter(link => link.ns === 0)
             .map(link => link['*']);
@@ -113,10 +110,8 @@ app.get('/api/best-link', async (req, res) => {
             return res.json({ bestLink: null, message: 'No links found in this article' });
         }
 
-        // FIRST PRIORITY: Check if the goal article is directly linked
         const goalLower = goal.toLowerCase();
 
-        // Check for exact match first (case-insensitive)
         for (const link of links) {
             if (link.toLowerCase() === goalLower) {
                 console.log(`✓ DIRECT MATCH FOUND: "${link}" IS YOUR GOAL!`);
@@ -129,12 +124,10 @@ app.get('/api/best-link', async (req, res) => {
             }
         }
 
-        // Check for partial matches (like "Poetry" appearing anywhere in link text)
         const goalWords = goalLower.split(' ');
         for (const link of links) {
             const linkLower = link.toLowerCase();
 
-            // Check if any goal word appears in the link
             for (const word of goalWords) {
                 if (word.length > 3 && linkLower.includes(word)) {
                     console.log(`PARTIAL MATCH FOUND: "${link}" contains "${word}"`);
@@ -146,7 +139,6 @@ app.get('/api/best-link', async (req, res) => {
                 }
             }
 
-            // Check for singular/plural variations
             if (linkLower === goalLower + 's' || linkLower + 's' === goalLower) {
                 console.log(`PLURAL MATCH FOUND: "${link}" matches "${goal}"`);
                 return res.json({
@@ -157,15 +149,12 @@ app.get('/api/best-link', async (req, res) => {
             }
         }
 
-        // SECOND PRIORITY: If no direct match, look for related topics
-        // Group links by relevance
         const scoredLinks = [];
 
         for (const link of links) {
             let score = 0;
             let reasons = [];
 
-            // Check if link shares words with goal
             for (const word of goalWords) {
                 if (word.length > 3 && link.toLowerCase().includes(word)) {
                     score += 30;
@@ -173,14 +162,12 @@ app.get('/api/best-link', async (req, res) => {
                 }
             }
 
-            // Check if link is in same category as goal
             if (goal === 'Poetry') {
-                // Poetry-related terms
                 const poetryTerms = ['poet', 'poem', 'literature', 'verse', 'rhyme', 'sonnet'];
                 for (const term of poetryTerms) {
                     if (link.toLowerCase().includes(term)) {
                         score += 20;
-                        reasons.push(`related to poetry`);
+                        reasons.push('related to poetry');
                         break;
                     }
                 }
@@ -195,7 +182,6 @@ app.get('/api/best-link', async (req, res) => {
             }
         }
 
-        // Sort by score and return best
         if (scoredLinks.length > 0) {
             scoredLinks.sort((a, b) => b.score - a.score);
             const best = scoredLinks[0];
@@ -206,7 +192,6 @@ app.get('/api/best-link', async (req, res) => {
                 alternatives: scoredLinks.slice(0, 3).map(l => l.title)
             });
         } else {
-            // Last resort: pick a random link
             const randomLink = links[Math.floor(Math.random() * links.length)];
             res.json({
                 bestLink: randomLink,
@@ -219,4 +204,137 @@ app.get('/api/best-link', async (req, res) => {
         console.error('Error finding best link:', error);
         res.status(500).json({ error: 'Failed to analyze links' });
     }
+});
+
+// helper to create room codes
+function generateRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+
+    for (let i = 0; i < 6; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    return code;
+}
+
+// helper to get public room state
+function getRoomState(roomCode) {
+    const room = rooms[roomCode];
+
+    if (!room) {
+        return null;
+    }
+
+    return {
+        roomCode: roomCode,
+        hostId: room.hostId,
+        status: room.status,
+        players: room.players
+    };
+}
+
+// socket.io connection
+io.on('connection', (socket) => {
+    console.log('Player connected:', socket.id);
+
+    socket.on('room:create', (playerName, callback) => {
+        const roomCode = generateRoomCode();
+
+        rooms[roomCode] = {
+            hostId: socket.id,
+            status: 'lobby',
+            players: [
+                {
+                    id: socket.id,
+                    name: playerName || 'Player 1'
+                }
+            ]
+        };
+
+        socket.join(roomCode);
+
+        if (callback) {
+            callback({
+                success: true,
+                roomCode: roomCode,
+                room: getRoomState(roomCode)
+            });
+        }
+
+        io.to(roomCode).emit('room:update', getRoomState(roomCode));
+    });
+
+    socket.on('room:join', (data, callback) => {
+        const roomCode = data.roomCode;
+        const playerName = data.playerName;
+        const room = rooms[roomCode];
+
+        if (!room) {
+            if (callback) {
+                callback({ success: false, message: 'Room not found' });
+            }
+            return;
+        }
+
+        if (room.players.length >= 4) {
+            if (callback) {
+                callback({ success: false, message: 'Room is full' });
+            }
+            return;
+        }
+
+        if (room.status !== 'lobby') {
+            if (callback) {
+                callback({ success: false, message: 'Game already started' });
+            }
+            return;
+        }
+
+        room.players.push({
+            id: socket.id,
+            name: playerName || 'Player'
+        });
+
+        socket.join(roomCode);
+
+        if (callback) {
+            callback({
+                success: true,
+                roomCode: roomCode,
+                room: getRoomState(roomCode)
+            });
+        }
+
+        io.to(roomCode).emit('room:update', getRoomState(roomCode));
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Player disconnected:', socket.id);
+
+        for (const roomCode in rooms) {
+            const room = rooms[roomCode];
+            const playerIndex = room.players.findIndex(player => player.id === socket.id);
+
+            if (playerIndex !== -1) {
+                room.players.splice(playerIndex, 1);
+
+                if (room.players.length === 0) {
+                    delete rooms[roomCode];
+                } else {
+                    if (room.hostId === socket.id) {
+                        room.hostId = room.players[0].id;
+                    }
+
+                    io.to(roomCode).emit('room:update', getRoomState(roomCode));
+                }
+
+                break;
+            }
+        }
+    });
+});
+
+server.listen(PORT, () => {
+    console.log(`✅ Server running at http://localhost:${PORT}`);
 });

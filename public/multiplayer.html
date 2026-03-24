@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WikiGame Multiplayer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .multiplayer-box {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 20px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.12);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            width: 250px;
+            margin: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #ffcc00;
+            color: black;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #ffd84d;
+        }
+
+        #roomInfo, #lobbySection {
+            display: none;
+        }
+
+        .player-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .player-list li {
+            background: rgba(255, 255, 255, 0.15);
+            margin: 8px auto;
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 400px;
+        }
+
+        .host-badge {
+            color: #ffeb3b;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .message {
+            margin-top: 10px;
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        .room-code {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ffeb3b;
+            letter-spacing: 3px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WikiGame Multiplayer</h1>
+        <p>Create a room or join a room with friends</p>
+
+        <div class="multiplayer-box">
+            <div class="section" id="setupSection">
+                <h2>Join Multiplayer</h2>
+
+                <div>
+                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                </div>
+
+                <div>
+                    <button id="createRoomBtn">Create Room</button>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <input type="text" id="roomCodeInput" placeholder="Enter room code" maxlength="6">
+                    <button id="joinRoomBtn">Join Room</button>
+                </div>
+
+                <div class="message" id="setupMessage"></div>
+            </div>
+
+            <div class="section" id="roomInfo">
+                <h2>Room Created / Joined</h2>
+                <p>Room Code:</p>
+                <div class="room-code" id="roomCodeDisplay">------</div>
+                <p>Status: <span id="roomStatus">lobby</span></p>
+            </div>
+
+            <div class="section" id="lobbySection">
+                <h2>Players in Lobby</h2>
+                <ul class="player-list" id="playerList"></ul>
+                <p id="hostMessage"></p>
+                <button id="startGameBtn" style="display: none;">Start Game</button>
+            </div>
+        </div>
+
+        <a class="back-link" href="index.html">Back to Main Menu</a>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/multiplayer.js"></script>
+</body>
+</html>
