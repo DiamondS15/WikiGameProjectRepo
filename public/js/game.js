@@ -553,44 +553,22 @@ class WikiGame {
         }
 
         if (hintBtn) {
-            hintBtn.addEventListener('click', async function () {
+            hintBtn.addEventListener('click', function () {
                 if (this.score >= 50) {
                     this.score -= 50;
                     this.updateUI();
 
-                    hintBtn.disabled = true;
-                    hintBtn.textContent = 'Analyzing...';
+                    // Simple helpful messages based on game state
+                    const messages = [
+                        `Look for links about ${this.goalArticle.split(' ')[0]}`,
+                        `Check the "See also" section`,
+                        `Try finding articles related to ${this.goalArticle}`,
+                        `Browse categories related to your goal`
+                    ];
 
-                    try {
-                        const response = await fetch(
-                            `/api/best-link?current=${encodeURIComponent(this.currentArticle)}&goal=${encodeURIComponent(this.goalArticle)}`
-                        );
-                        const data = await response.json();
-
-                        if (data.error) {
-                            alert('Could not analyze links. Try again later.');
-                        } else if (data.bestLink) {
-                            let message = `🔍 Smart Hint:\n\nBased on our analysis, the best link to click is:\n\n👉 "${data.bestLink}"\n\n${data.message}`;
-
-                            if (data.alternatives && data.alternatives.length > 0) {
-                                message += `\n\nOther options: ${data.alternatives.join(', ')}`;
-                            }
-
-                            alert(message);
-                            this.highlightSuggestedLink(data.bestLink);
-                        } else {
-                            // No relevant links found
-                            alert('No clearly relevant links found in this article. Try exploring different paths!');
-                        }
-                    } catch (error) {
-                        console.error('Hint error:', error);
-                        alert('Error getting hint. Please try again.');
-                    } finally {
-                        hintBtn.disabled = false;
-                        hintBtn.textContent = 'Hint (-50)';
-                    }
+                    alert(`Hint: ${messages[Math.floor(Math.random() * messages.length)]}`);
                 } else {
-                    alert('Not enough points for a hint! (Need 50 points)');
+                    alert('Not enough points!');
                 }
             }.bind(this));
         }

@@ -81,7 +81,7 @@ app.get('/api/related-article-simple/:title', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ Server running at http://localhost:${PORT}`);
 });
-// Improved best-link endpoint with 2-step lookahead
+// Improved best-link endpoint - FIRST CHECK ALL ACTUAL LINKS
 app.get('/api/best-link', async (req, res) => {
     try {
         const { current, goal } = req.query;
@@ -91,20 +91,6 @@ app.get('/api/best-link', async (req, res) => {
         }
 
         console.log(`Finding best link from "${current}" to "${goal}"`);
-
-        // Handle singular/plural variations
-        const goalLower = goal.toLowerCase();
-        const goalVariations = [
-            goalLower,
-            goalLower.replace(/s$/, ''),  // Remove trailing s (plural to singular)
-            goalLower + 's',                // Add s (singular to plural)
-            goalLower.replace(/ies$/, 'y'), // Handle words ending in "ies" (e.g., "cities" -> "city")
-            goalLower.replace(/y$/, 'ies')  // Handle words ending in "y" (e.g., "city" -> "cities")
-        ];
-
-        // Remove duplicates
-        const uniqueGoalVariations = [...new Set(goalVariations)];
-        console.log('Goal variations:', uniqueGoalVariations);
 
         // Get the current article to extract its links
         const currentResponse = await fetch(
@@ -116,9 +102,9 @@ app.get('/api/best-link', async (req, res) => {
             return res.json({ bestLink: null, message: 'Could not analyze article links' });
         }
 
-        // Get all links from the current article (filter to main namespace only)
+        // Get all links from the current article
         const links = currentData.parse.links
-            .filter(link => link.ns === 0) // Only main namespace articles
+            .filter(link => link.ns === 0)
             .map(link => link['*']);
 
         console.log(`Found ${links.length} links in current article`);
@@ -127,126 +113,105 @@ app.get('/api/best-link', async (req, res) => {
             return res.json({ bestLink: null, message: 'No links found in this article' });
         }
 
-        // Check for goal variations in links
-        for (const variation of uniqueGoalVariations) {
-            if (links.includes(variation)) {
+        // FIRST PRIORITY: Check if the goal article is directly linked
+        const goalLower = goal.toLowerCase();
+
+        // Check for exact match first (case-insensitive)
+        for (const link of links) {
+            if (link.toLowerCase() === goalLower) {
+                console.log(`✓ DIRECT MATCH FOUND: "${link}" IS YOUR GOAL!`);
                 return res.json({
-                    bestLink: variation,
-                    message: `Click "${variation}" - it's your goal!`,
-                    directMatch: true
+                    bestLink: link,
+                    message: `"${link}" - THIS IS YOUR GOAL! Click it to win!`,
+                    directMatch: true,
+                    isGoal: true
                 });
             }
         }
 
-        // SCORING SYSTEM WITH 2-STEP LOOKAHEAD
-        const linkScores = [];
-        const linksToCheck = links.slice(0, 10); // Check first 10 links (to avoid rate limiting)
+        // Check for partial matches (like "Poetry" appearing anywhere in link text)
+        const goalWords = goalLower.split(' ');
+        for (const link of links) {
+            const linkLower = link.toLowerCase();
 
-        for (const link of linksToCheck) {
-            try {
-                // Small delay to avoid hitting Wikipedia too hard
-                await new Promise(resolve => setTimeout(resolve, 200));
-
-                // Get the links within THIS link (second-level links)
-                const linkResponse = await fetch(
-                    `https://en.wikipedia.org/w/api.php?action=parse&page=${encodeURIComponent(link)}&format=json&prop=links&origin=*`
-                );
-                const linkData = await linkResponse.json();
-
-                let score = 0;
-                let reason = '';
-
-                if (linkData.parse && linkData.parse.links) {
-                    const secondLevelLinks = linkData.parse.links
-                        .filter(l => l.ns === 0)
-                        .map(l => l['*']);
-
-                    // Check for goal variations in second-level links
-                    for (const variation of uniqueGoalVariations) {
-                        if (secondLevelLinks.includes(variation)) {
-                            score = 100;
-                            reason = `leads to "${variation}" in just 2 steps!`;
-                            break;
-                        }
-                    }
-
-                    // If no direct 2-step path, check for goal-related terms
-                    if (score === 0) {
-                        const goalWords = goal.toLowerCase().split(' ');
-                        let relevance = 0;
-
-                        for (const word of goalWords) {
-                            if (word.length > 3) {
-                                // Check second-level links for goal-related terms
-                                const matchingSecondLevel = secondLevelLinks.filter(t =>
-                                    t.toLowerCase().includes(word)
-                                ).length;
-                                relevance += matchingSecondLevel * 15;
-
-                                // Also check the link title itself for goal-related terms
-                                if (link.toLowerCase().includes(word)) {
-                                    relevance += 10;
-                                }
-                            }
-                        }
-
-                        // CATEGORY-BASED SCORING
-                        const scienceTerms = ['science', 'technology', 'computer', 'ai', 'artificial', 'intelligence',
-                            'math', 'physics', 'biology', 'chemistry', 'engineering'];
-
-                        for (const term of scienceTerms) {
-                            if (link.toLowerCase().includes(term)) {
-                                relevance += 20;
-                                reason = 'leads toward science/technology topics';
-                                break;
-                            }
-                        }
-
-                        if (relevance > 0) {
-                            score = Math.min(90, relevance);
-                            if (!reason) reason = 'related to your goal';
-                        }
-                    }
-                }
-
-                // Only include links with actual relevance
-                if (score > 0) {
-                    linkScores.push({
-                        title: link,
-                        score: score,
-                        reason: reason || 'related to your goal'
+            // Check if any goal word appears in the link
+            for (const word of goalWords) {
+                if (word.length > 3 && linkLower.includes(word)) {
+                    console.log(`PARTIAL MATCH FOUND: "${link}" contains "${word}"`);
+                    return res.json({
+                        bestLink: link,
+                        message: `"${link}" - contains "${word}" which relates to your goal "${goal}"`,
+                        partialMatch: true
                     });
-                } else {
-                    console.log(`Skipping unrelevant link: ${link}`);
                 }
+            }
 
-            } catch (e) {
-                console.log(`Error checking link ${link}:`, e.message);
-                // Don't include links that error out
+            // Check for singular/plural variations
+            if (linkLower === goalLower + 's' || linkLower + 's' === goalLower) {
+                console.log(`PLURAL MATCH FOUND: "${link}" matches "${goal}"`);
+                return res.json({
+                    bestLink: link,
+                    message: `"${link}" - matches your goal "${goal}"`,
+                    pluralMatch: true
+                });
             }
         }
 
-        // Sort by score and get the best
-        linkScores.sort((a, b) => b.score - a.score);
+        // SECOND PRIORITY: If no direct match, look for related topics
+        // Group links by relevance
+        const scoredLinks = [];
 
-        if (linkScores.length > 0) {
-            const best = linkScores[0];
-            const message = best.score >= 100
-                ? `"${best.title}" ${best.reason}`
-                : `"${best.title}" - ${best.reason || 'related to your goal'}`;
+        for (const link of links) {
+            let score = 0;
+            let reasons = [];
+
+            // Check if link shares words with goal
+            for (const word of goalWords) {
+                if (word.length > 3 && link.toLowerCase().includes(word)) {
+                    score += 30;
+                    reasons.push(`contains "${word}"`);
+                }
+            }
+
+            // Check if link is in same category as goal
+            if (goal === 'Poetry') {
+                // Poetry-related terms
+                const poetryTerms = ['poet', 'poem', 'literature', 'verse', 'rhyme', 'sonnet'];
+                for (const term of poetryTerms) {
+                    if (link.toLowerCase().includes(term)) {
+                        score += 20;
+                        reasons.push(`related to poetry`);
+                        break;
+                    }
+                }
+            }
+
+            if (score > 0) {
+                scoredLinks.push({
+                    title: link,
+                    score: score,
+                    reason: reasons.join(', ')
+                });
+            }
+        }
+
+        // Sort by score and return best
+        if (scoredLinks.length > 0) {
+            scoredLinks.sort((a, b) => b.score - a.score);
+            const best = scoredLinks[0];
 
             res.json({
                 bestLink: best.title,
-                score: best.score,
-                message: message,
-                alternatives: linkScores.slice(0, 3).map(l => l.title)
+                message: `"${best.title}" - ${best.reason || 'related to your goal'}`,
+                alternatives: scoredLinks.slice(0, 3).map(l => l.title)
             });
         } else {
-            // No relevant links found message
+            // Last resort: pick a random link
+            const randomLink = links[Math.floor(Math.random() * links.length)];
             res.json({
-                bestLink: null,
-                message: "No clearly relevant links found. Try exploring different paths!",
-                alternatives: []
+                bestLink: randomLink,
+                message: `Try "${randomLink}" - no clearly related links found`,
+                isRandom: true
             });
         }
 
