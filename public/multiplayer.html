@@ -21,16 +21,52 @@
         <div class="row g-0">
             <div class="col-2 sidebar">
                 <div class="game-info">
+                    <!-- Same core game sections as single player -->
                     <div class="info-section">
-                        <h6>Player</h6>
-                        <input type="text" id="playerName" class="form-control form-control-sm mb-2" placeholder="Enter name" maxlength="20">
+                        <h6>Goal</h6>
+                        <div id="goal-title" class="goal-article">-</div>
                     </div>
 
                     <div class="info-section">
-                        <h6>Room</h6>
-                        <button id="createRoomBtn" class="btn btn-sm btn-outline-primary w-100 mb-2">Create Room</button>
-                        <input type="text" id="roomCodeInput" class="form-control form-control-sm mb-2" placeholder="Room code" maxlength="6">
-                        <button id="joinRoomBtn" class="btn btn-sm btn-outline-primary w-100">Join Room</button>
+                        <h6>Stats</h6>
+                        <div class="stat-item">
+                            <span>Wikiscore</span>
+                            <span id="score" class="stat-value">1000</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Time</span>
+                            <span id="timer" class="stat-value">00:00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>Moves</span>
+                            <span id="moves" class="stat-value">0</span>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h6>Controls</h6>
+                        <button id="new-game" class="btn btn-sm btn-outline-primary w-100 mb-2">New Game</button>
+                        <button id="give-up" class="btn btn-sm btn-outline-danger w-100">Give Up</button>
+                    </div>
+
+                    <div class="info-section">
+                        <h6>Links</h6>
+                        <div id="article-count" class="small">0 available</div>
+                    </div>
+
+                    <!-- Multiplayer-only additions -->
+                    <div id="roomSetupSection">
+                        <div class="info-section">
+                            <h6>Player</h6>
+                            <input type="text" id="playerName" class="form-control form-control-sm mb-2" placeholder="Enter name" maxlength="20">
+                        </div>
+
+                        <div class="info-section">
+                            <h6>Room</h6>
+                            <button id="createRoomBtn" class="btn btn-sm btn-outline-primary w-100 mb-2">Create Room</button>
+                            <input type="text" id="roomCodeInput" class="form-control form-control-sm mb-2" placeholder="Room code" maxlength="6">
+                            <button id="joinRoomBtn" class="btn btn-sm btn-outline-primary w-100">Join Room</button>
+                        </div>
                     </div>
 
                     <div class="info-section">
@@ -44,22 +80,6 @@
                             <span id="roomStatus" class="stat-value">-</span>
                         </div>
                         <button id="startGameBtn" class="btn btn-sm btn-outline-warning w-100 mt-2" style="display:none;">Start Game</button>
-                    </div>
-
-                    <div class="info-section">
-                        <h6>Game</h6>
-                        <div class="stat-item">
-                            <span>Goal</span>
-                            <span id="goal-title" class="stat-value">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span>Start</span>
-                            <span id="start-title" class="stat-value">-</span>
-                        </div>
-                        <div class="stat-item">
-                            <span>Current</span>
-                            <span id="current-title-side" class="stat-value">-</span>
-                        </div>
                     </div>
 
                     <div class="info-section">
