@@ -170,6 +170,7 @@ function getRoomState(roomCode) {
         startArticle: room.startArticle,
         goalArticle: room.goalArticle,
         winnerId: room.winnerId,
+        startedAt: room.startedAt,
         players: room.players
     };
 }
@@ -186,6 +187,7 @@ io.on('connection', (socket) => {
             startArticle: null,
             goalArticle: null,
             winnerId: null,
+            startedAt: null,
             players: [
                 {
                     id: socket.id,
@@ -297,6 +299,7 @@ io.on('connection', (socket) => {
             room.startArticle = startArticle;
             room.goalArticle = goalArticle;
             room.winnerId = null;
+            room.startedAt = Date.now();
 
             room.players.forEach(player => {
                 player.currentArticle = startArticle;
@@ -322,7 +325,51 @@ io.on('connection', (socket) => {
         }
     });
 
-        socket.on('player:navigate', (data, callback) => {
+    socket.on('player:giveup', (data, callback) => {
+        const roomCode = data.roomCode;
+        const room = rooms[roomCode];
+
+        if (!room) {
+            if (callback) {
+                callback({ success: false, message: 'Room not found' });
+            }
+            return;
+        }
+
+        if (room.status !== 'playing') {
+            if (callback) {
+                callback({ success: false, message: 'Game is not active' });
+            }
+            return;
+        }
+
+        const player = room.players.find(p => p.id === socket.id);
+
+        if (!player) {
+            if (callback) {
+                callback({ success: false, message: 'Player not found in room' });
+            }
+            return;
+        }
+
+        player.finished = true;
+        room.status = 'finished';
+
+        const remainingPlayer = room.players.find(p => p.id !== socket.id);
+        room.winnerId = remainingPlayer ? remainingPlayer.id : null;
+
+        const roomState = getRoomState(roomCode);
+        io.to(roomCode).emit('room:update', roomState);
+
+        if (callback) {
+            callback({
+                success: true,
+                room: roomState
+            });
+        }
+    });
+
+    socket.on('player:navigate', (data, callback) => {
         const roomCode = data.roomCode;
         const articleTitle = data.articleTitle;
         const room = rooms[roomCode];
