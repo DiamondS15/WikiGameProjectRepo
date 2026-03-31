@@ -408,31 +408,6 @@ body {
     }
 }
 
-/* Hint highlighted with pulse animation */
-@keyframes hintPulse {
-    0% {
-        background-color: #fff3cd;
-        box-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
-    }
-
-    50% {
-        background-color: #ffe69c;
-        box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
-        transform: scale(1.02);
-    }
-
-    100% {
-        background-color: #fff3cd;
-        box-shadow: 0 0 5px rgba(255, 193, 7, 0.3);
-    }
-}
-
-.hint-pulse {
-    animation: hintPulse 1.5s infinite;
-    position: relative;
-    z-index: 10;
-}
-
 /* Subtle glow effect */
 .wiki-game-link[style*="background-color: rgb(255, 243, 205)"] {
     transition: all 0.3s ease;

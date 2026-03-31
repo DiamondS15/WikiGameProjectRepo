@@ -76,84 +76,7 @@ class WikiGame {
             alert('Failed to start game. Please try again.');
         }
     }
-    highlightSuggestedLink(linkTitle) {
-        // Wait a moment for the article to fully load
-        setTimeout(() => {
-            // Find all game links
-            const links = document.querySelectorAll('.wiki-game-link');
-            let found = false;
-            let targetLink = null;
 
-            // Remove any existing highlights
-            links.forEach(l => {
-                l.style.backgroundColor = '';
-                l.style.fontWeight = '';
-                l.style.border = '';
-                l.style.boxShadow = '';
-            });
-
-            // Find and highlight the suggested link
-            links.forEach(link => {
-                if (link.dataset.title === linkTitle) {
-                    link.style.backgroundColor = '#fff3cd';
-                    link.style.fontWeight = 'bold';
-                    link.style.border = '2px solid #ffc107';
-                    link.style.boxShadow = '0 0 10px rgba(255, 193, 7, 0.5)';
-                    link.style.padding = '2px 4px';
-                    link.style.transition = 'all 0.3s ease';
-
-                    targetLink = link;
-                    found = true;
-                }
-            });
-
-            if (found && targetLink) {
-                // SCROLL TO THE LINK
-                targetLink.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest'
-                });
-
-                // Add a pulsing animation class
-                targetLink.classList.add('hint-pulse');
-
-                // Log for debugging
-                console.log('Scrolling to:', linkTitle);
-
-                // Remove highlight after 8 seconds
-                setTimeout(() => {
-                    targetLink.style.backgroundColor = '';
-                    targetLink.style.fontWeight = '';
-                    targetLink.style.border = '';
-                    targetLink.style.boxShadow = '';
-                    targetLink.style.padding = '';
-                    targetLink.classList.remove('hint-pulse');
-                }, 8000);
-            } else {
-                console.log('Could not find link to highlight:', linkTitle);
-
-                // If not found, try again after a longer delay
-                setTimeout(() => {
-                    const retryLinks = document.querySelectorAll('.wiki-game-link');
-                    retryLinks.forEach(link => {
-                        if (link.dataset.title === linkTitle) {
-                            link.style.backgroundColor = '#fff3cd';
-                            link.style.fontWeight = 'bold';
-                            link.style.border = '2px solid #ffc107';
-                            link.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                            setTimeout(() => {
-                                link.style.backgroundColor = '';
-                                link.style.fontWeight = '';
-                                link.style.border = '';
-                            }, 8000);
-                        }
-                    });
-                }, 2000);
-            }
-        }, 600); // Slightly longer wait to ensure article is fully rendered
-    }
 
     async loadArticle(title) {
         try {
@@ -541,34 +464,12 @@ class WikiGame {
 
     setupEventListeners() {
         const newGameBtn = document.getElementById('new-game');
-        const hintBtn = document.getElementById('hint');
         const giveUpBtn = document.getElementById('give-up');
 
         if (newGameBtn) {
             newGameBtn.addEventListener('click', function () {
                 if (confirm('Start a new game? Current progress will be lost.')) {
                     this.startNewGame();
-                }
-            }.bind(this));
-        }
-
-        if (hintBtn) {
-            hintBtn.addEventListener('click', function () {
-                if (this.score >= 50) {
-                    this.score -= 50;
-                    this.updateUI();
-
-                    // Simple helpful messages based on game state
-                    const messages = [
-                        `Look for links about ${this.goalArticle.split(' ')[0]}`,
-                        `Check the "See also" section`,
-                        `Try finding articles related to ${this.goalArticle}`,
-                        `Browse categories related to your goal`
-                    ];
-
-                    alert(`Hint: ${messages[Math.floor(Math.random() * messages.length)]}`);
-                } else {
-                    alert('Not enough points!');
                 }
             }.bind(this));
         }
